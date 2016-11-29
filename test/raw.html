@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <title>app-sessionstorage-basic</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../app-sessionstorage.html">
+  </head>
+  <body>
+    <test-fixture id="fixture">
+      <template>
+        <app-sessionstorage id="sessionstorage" name="app-sessionstorage-test" use-raw></app-sessionstorage>
+      </template>
+    </test-fixture>
+    <script>
+      var storage;
+      suite('raw', function() {
+        setup(function() {
+          window.sessionStorage.setItem('app-sessionstorage-test', 'hello world');
+          document.getElementById('fixture').create();
+          storage = document.getElementById('sessionstorage');
+          storage.flushDebouncer('reload');
+        });
+        teardown(function() {
+          window.sessionStorage.removeItem('app-sessionstorage-test');
+        });
+        test('load', function() {
+          assert.equal(storage.value, 'hello world');
+        });
+        test('save', function() {
+          var m = 'goodbye';
+          storage.value = m;
+          storage.flushDebouncer('save');
+          var v = window.sessionStorage.getItem(storage.name);
+          assert.equal(v, m);
+        });
+      });
+    </script>
+  </body>
+</html>
