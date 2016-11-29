@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <title>app-sessionstorage-basic</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../app-sessionstorage.html">
+  </head>
+  <body>
+    <test-fixture id="fixture">
+      <template>
+        <app-sessionstorage id="sessionstorage" name="app-sessionstorage-test"></app-sessionstorage>
+      </template>
+    </test-fixture>
+    <template id="boundTemplate" is="dom-bind">
+      <app-sessionstorage id="boundLocal" name="app-sessionstorage-test" value="{{value}}"></app-sessionstorage>
+    </template>
+    <script>
+      var storage;
+      suite('basic', function() {
+        setup(function(){
+          window.sessionStorage.setItem('app-sessionstorage-test', '{"foo":"bar"}');
+          storage = document.getElementById('fixture').create();
+          storage.flushDebouncer('reload');
+        });
+        teardown(function(){
+          window.sessionStorage.removeItem('app-sessionstorage-test');
+        });
+        test('load', function() {
+          assert.isNotNull(storage.value);
+          assert.equal(storage.value.foo, 'bar');
+        });
+        test('save', function() {
+          var newValue = {'foo': 'zot'};
+          storage.value = newValue;
+          storage.flushDebouncer('save');
+          var v = window.sessionStorage.getItem(storage.name);
+          v = JSON.parse(v);
+          assert.equal(v.foo, newValue.foo);
+        });
+        test('delete', function() {
+          storage.value = null;
+          storage.flushDebouncer('save');
+          var v = window.sessionStorage.getItem(storage.name);
+          assert.isNull(v);
+          storage.value = undefined;
+          storage.flushDebouncer('save');
+          var v = window.sessionStorage.getItem(storage.name);
+          assert.isNull(v);
+        });
+        test('event app-sessionstorage-load', function(done) {
+          var ls = document.createElement('app-sessionstorage');
+          ls.addEventListener('app-sessionstorage-load', function() {
+            done();
+          });
+          ls.name = 'app-sessionstorage-test';
+        });
+        test('event app-sessionstorage-load-empty', function(done) {
+          window.sessionStorage.removeItem('app-sessionstorage-test');
+          var ls = document.createElement('app-sessionstorage');
+          ls.addEventListener('app-sessionstorage-load-empty', function() {
+            ls.value = "Yo";
+            ls.flushDebouncer('save');
+            assert.equal("Yo", JSON.parse( window.sessionStorage.getItem('app-sessionstorage-test')));
+            done();
+          });
+          ls.name = 'app-sessionstorage-test';
+        });
+        test('auto-save sub-properties', function() {
+          var t = document.querySelector('#boundTemplate');
+          var ls = document.querySelector('#boundLocal');
+          var value = { foo: 'FOO', bar: 'BAR' };
+          t.value = value;
+          assert.equal('FOO', ls.value.foo); // value has propagated from template to storage
+          ls.flushDebouncer('save');
+          t.value.foo = "Yo";
+          ls.flushDebouncer('save');
+          var item = JSON.parse( window.sessionStorage.getItem('app-sessionstorage-test'));
+          assert.notEqual('Yo', item.foo); // did not propagate because did not use setters
+          t.set('value.foo', 'BAZ!');
+          ls.flushDebouncer('save');
+          var item = JSON.parse( window.sessionStorage.getItem('app-sessionstorage-test'));
+          assert.equal('BAZ!', item.foo); // did propagate
+          ls.value = null;
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <title>app-sessionstorage-basic</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../app-sessionstorage.html">
+  </head>
+  <body>
+    <dom-module id="x-foo">
+      <template>
+        <div>{{value.foo}}</div>
+      </template>
+    </dom-module>
+    <dom-module id="x-test">
+      <template>
+        <x-foo value="{{value}}"></x-foo>
+        <app-sessionstorage id="sessionstorage" name="app-sessionstorage-test" value="{{value}}"></app-sessionstorage>
+      </template>
+    </dom-module>
+    <x-test></x-test>
+    <script>
+      window.sessionStorage.setItem('app-sessionstorage-test', '{"foo":"bar"}');
+      var xtest;
+      suite('basic', function() {
+        suiteSetup(function() {
+          Polymer({
+            is: 'x-foo',
+            properties: {
+              'value': {
+                type: Object,
+                notify: true
+              }
+            }
+          });
+          Polymer({
+            is: 'x-test',
+            properties: {
+              'value': {
+                type: Object,
+                notify: true
+              }
+            }
+          });
+          window.sessionStorage.setItem('app-sessionstorage-test', '{"foo":"bar"}');
+          xtest = document.querySelector('x-test');
+          xtest.$.sessionstorage.reload();
+        });
+        suiteTeardown(function() {
+          window.sessionStorage.removeItem('app-sessionstorage-test');
+        });
+        test('initial value', function() {
+          assert.isNotNull(xtest.value);
+          assert.equal(xtest.value.foo, 'bar');
+        });
+        test('set value', function() {
+          var newValue = {'foo': 'zot'};
+          xtest.value = newValue;
+          xtest.$.sessionstorage.flushDebouncer('save');
+          var v = window.sessionStorage.getItem(xtest.$.sessionstorage.name);
+          v = JSON.parse(v);
+          assert.equal(v.foo, newValue.foo);
+        });
+        test('save', function() {
+          xtest.value.foo = 'quux';
+          xtest.$.sessionstorage.save();
+          var v = window.sessionStorage.getItem(xtest.$.sessionstorage.name);
+          v = JSON.parse(v);
+          assert.equal(v.foo, 'quux');
+        });
+      });
+    </script>
+  </body>
+</html>
