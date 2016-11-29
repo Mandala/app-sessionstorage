@@ -9,7 +9,7 @@ Polymer custom element for saving object to session storage as JSON by default.
 
 * Saving data as key-value pair into browser session storage
 * Synchronize using Polymer data binding
-* Set `auto-save-disabled` to prevent automatic saving _(In Progress)_
+* Set `auto-save-disabled` to prevent automatic saving
 * Value is saved as JSON by default
 * To delete a `key`, set `value` to `null`
 
